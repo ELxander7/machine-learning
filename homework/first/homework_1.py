@@ -10,7 +10,7 @@ from PIL import Image
 
 
 def find_optimal_k(X, k_range=range(2, 11)):
-    print("Определение оптимального количества кластеров (для демонстрации)...")
+    print("Определение оптимального количества кластеров...")
     inertia = []
     silhouette_scores = []
 
@@ -21,7 +21,7 @@ def find_optimal_k(X, k_range=range(2, 11)):
         silhouette_scores.append(silhouette_score(X, kmeans.labels_))
 
     optimal_k = k_range[np.argmax(silhouette_scores)]
-    print(f'Оптимальное количество кластеров (для демонстрации): {optimal_k}')
+    print(f'Оптимальное количество кластеров: {optimal_k}')
 
     # Визуализация методов
     plt.figure(figsize=(12, 5))
@@ -43,15 +43,18 @@ def find_optimal_k(X, k_range=range(2, 11)):
     return optimal_k
 
 
-def manual_kmeans(X, K=3, max_iter=10, tol=1e-6):
-    print("\nЗапуск ручной реализации K-means (3 кластера)...")
+def manual_kmeans(X, K=None, max_iter=10, tol=1e-6):
+    if K is None:
+        K = find_optimal_k(X)
+
+    print(f"\nЗапуск ручной реализации K-means ({K} кластера)...")
 
     # Стандартизация данных
     X_scaled = StandardScaler().fit_transform(X)
     n_samples, n_features = X_scaled.shape
 
-    # Цвета для кластеров (фиксированные 3 цвета)
-    colors = ['red', 'blue', 'green']
+    # Цвета для кластеров
+    colors = plt.colormaps['tab10'].resampled(K).colors
 
     # Инициализация центроидов
     np.random.seed(42)
@@ -112,11 +115,11 @@ def manual_kmeans(X, K=3, max_iter=10, tol=1e-6):
     images[0].save('kmeans_animation.gif', save_all=True, append_images=images[1:],
                    optimize=False, duration=1000, loop=0)
 
-    return labels, centroids
+    return labels, centroids, K
 
 
-def final_visualization(X, labels, centroids, K=3):
-    print("\nФинальная визуализация (3 кластера)...")
+def final_visualization(X, labels, centroids, K):
+    print(f"\nФинальная визуализация ({K} кластера)...")
 
     # Стандартизация данных
     X_scaled = StandardScaler().fit_transform(X)
@@ -125,8 +128,8 @@ def final_visualization(X, labels, centroids, K=3):
     # Все возможные пары признаков для визуализации
     feature_pairs = list(combinations(range(n_features), 2))
 
-    # Цвета для кластеров (фиксированные 3 цвета)
-    colors = ['red', 'blue', 'green']
+    # Цвета для кластеров
+    colors = plt.colormaps['tab10'].resampled(K).colors
 
     # Финальная визуализация всех проекций
     print("Создание финальной визуализации...")
@@ -144,7 +147,7 @@ def final_visualization(X, labels, centroids, K=3):
         plt.title(f'{iris.feature_names[f1]} vs {iris.feature_names[f2]}')
         plt.legend()
 
-    plt.suptitle('Финальный результат кластеризации - все проекции (3 кластера)', fontsize=16)
+    plt.suptitle(f'Финальный результат кластеризации - все проекции ({K} кластера)', fontsize=16)
     plt.tight_layout()
     plt.savefig('final_clusters.png')
     plt.show()
@@ -154,14 +157,11 @@ if __name__ == "__main__":
     iris = load_iris()
     X = iris.data
 
-    # Определение оптимального K
-    optimal_k = find_optimal_k(X)
+    # Ручной K-means с автоматическим определением оптимального K
+    cluster_labels, cluster_centroids, optimal_k = manual_kmeans(X)
 
-    # Ручной K-means (3 кластера)
-    cluster_labels, cluster_centroids = manual_kmeans(X)
-
-    # Финальная визуализация (3 кластера)
-    final_visualization(X, cluster_labels, cluster_centroids)
+    # Финальная визуализация
+    final_visualization(X, cluster_labels, cluster_centroids, optimal_k)
 
     print("\nГотово! Результаты сохранены в файлы:")
     print("- kmeans_animation.gif (анимация процесса кластеризации)")
