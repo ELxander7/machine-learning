@@ -33,6 +33,8 @@ user_data = {
 # функция для проверки совпадения лица с желаемым
 def func_face(frame):
     global face_match
+
+
     try:
         if DeepFace.verify(frame, ref_img.copy())['verified']: # сравнивает лица
             face_match = True
